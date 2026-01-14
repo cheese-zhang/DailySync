@@ -24,7 +24,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     name: Gather RQ statistical data and write it to google sheet
     steps:
       - uses: actions/checkout@v3

@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     name: Migrate Garmin CN to Garmin Global
     steps:
       - uses: actions/checkout@v3

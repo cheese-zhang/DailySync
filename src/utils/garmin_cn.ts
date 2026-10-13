@@ -9,6 +9,7 @@ import {
 import { downloadGarminActivity, uploadGarminActivity } from './garmin_common';
 import { GarminClientType } from './type';
 import { number2capital } from './number_tricks';
+import { selectNewActivities } from './activity';
 const core = require('@actions/core');
 import _ from 'lodash';
 
@@ -83,7 +84,7 @@ export const syncGarminCN2GarminGlobal = async () => {
     const clientCN = await getGaminCNClient();
     const clientGlobal = await getGaminGlobalClient();
 
-    let cnActs = await clientCN.getActivities(0, Number(GARMIN_SYNC_NUM));
+    const cnActs = await clientCN.getActivities(0, Number(GARMIN_SYNC_NUM));
     const globalActs = await clientGlobal.getActivities(0, 1);
 
     const latestGlobalActStartTime = globalActs[0]?.startTimeLocal ?? '0';
@@ -92,19 +93,16 @@ export const syncGarminCN2GarminGlobal = async () => {
         console.log(`没有要同步的活动内容, 最近的活动:  【 ${cnActs[0]?.activityName} 】, 开始于: 【 ${latestCnActStartTime} 】`);
     } else {
         // fix: #18
-        _.reverse(cnActs);
+        const newActs = selectNewActivities(cnActs, latestGlobalActStartTime);
         let actualNewActivityCount = 1;
-        for (let i = 0; i < cnActs.length; i++) {
-            const cnAct = cnActs[i];
-            if (cnAct.startTimeLocal > latestGlobalActStartTime) {
-                // 下载佳明原始数据
-                const filePath = await downloadGarminActivity(cnAct.activityId, clientCN);
-                // 上传到佳明国际区
-                console.log(`本次开始向国际区上传第 ${number2capital(actualNewActivityCount)} 条数据，【 ${cnAct.activityName} 】，开始于 【 ${cnAct.startTimeLocal} 】，活动ID: 【 ${cnAct.activityId} 】`);
-                await uploadGarminActivity(filePath, clientGlobal);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                actualNewActivityCount++;
-            }
+        for (const cnAct of newActs) {
+            // 下载佳明原始数据
+            const filePath = await downloadGarminActivity(cnAct.activityId, clientCN);
+            // 上传到佳明国际区
+            console.log(`本次开始向国际区上传第 ${number2capital(actualNewActivityCount)} 条数据，【 ${cnAct.activityName} 】，开始于 【 ${cnAct.startTimeLocal} 】，活动ID: 【 ${cnAct.activityId} 】`);
+            await uploadGarminActivity(filePath, clientGlobal);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            actualNewActivityCount++;
         }
     }
 };

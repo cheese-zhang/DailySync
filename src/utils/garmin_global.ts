@@ -8,6 +8,7 @@ import { getGaminCNClient } from './garmin_cn';
 import { GarminClientType } from './type';
 import { downloadGarminActivity, uploadGarminActivity } from './garmin_common';
 import { number2capital } from './number_tricks';
+import { selectNewActivities } from './activity';
 const core = require('@actions/core');
 import _ from 'lodash';
 import fs from "fs";
@@ -82,7 +83,7 @@ export const syncGarminGlobal2GarminCN = async () => {
     const clientGlobal = await getGaminGlobalClient();
 
     const cnActs = await clientCN.getActivities(0, 1);
-    let globalActs = await clientGlobal.getActivities(0, Number(GARMIN_SYNC_NUM));
+    const globalActs = await clientGlobal.getActivities(0, Number(GARMIN_SYNC_NUM));
 
     const latestGlobalActStartTime = globalActs[0]?.startTimeLocal ?? '0';
     const latestCnActStartTime = cnActs[0]?.startTimeLocal ?? '0';
@@ -91,19 +92,16 @@ export const syncGarminGlobal2GarminCN = async () => {
         console.log(`没有要同步的活动内容, 最近的活动:  【 ${globalActs[0]?.activityName} 】, 开始于: 【 ${latestGlobalActStartTime} 】`);
     } else {
         // fix: #18
-        _.reverse(globalActs);
+        const newActs = selectNewActivities(globalActs, latestCnActStartTime);
         let actualNewActivityCount = 1;
-        for (let i = 0; i < globalActs.length; i++) {
-            const globalAct = globalActs[i];
-            if (globalAct.startTimeLocal > latestCnActStartTime) {
-                // 下载佳明原始数据
-                const filePath = await downloadGarminActivity(globalAct.activityId, clientGlobal);
-                // 上传到佳明中国区的
-                console.log(`本次开始向中国区上传第 ${number2capital(actualNewActivityCount)} 条数据，【 ${globalAct.activityName} 】，开始于 【 ${globalAct.startTimeLocal} 】，活动ID: 【 ${globalAct.activityId} 】`);
-                await uploadGarminActivity(filePath, clientCN);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                actualNewActivityCount++;
-            }
+        for (const globalAct of newActs) {
+            // 下载佳明原始数据
+            const filePath = await downloadGarminActivity(globalAct.activityId, clientGlobal);
+            // 上传到佳明中国区的
+            console.log(`本次开始向中国区上传第 ${number2capital(actualNewActivityCount)} 条数据，【 ${globalAct.activityName} 】，开始于 【 ${globalAct.startTimeLocal} 】，活动ID: 【 ${globalAct.activityId} 】`);
+            await uploadGarminActivity(filePath, clientCN);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            actualNewActivityCount++;
         }
     }
 };

@@ -12,6 +12,7 @@ import {
 } from '../constant';
 import { GarminClientType } from './type';
 import _ from 'lodash';
+import { formatPace } from './activity';
 const decompress = require('decompress');
 
 const unzipper = require('unzipper');
@@ -91,19 +92,7 @@ export const getGarminStatistics = async (client: GarminClientType): Promise<Rec
         activityTrainingLoad, // 训练负荷
     } = recentRunningAct;
 
-    const pace = 1 / (averageSpeed / 1000 * 60);
-    const pace_min = Math.floor(1 / (averageSpeed / 1000 * 60));
-    let pace_second = Math.round((pace - pace_min) * 60);
-    let pace_min_fixed = pace_min;
-    if (pace_second >= 60) {
-        pace_second -= 60;
-        pace_min_fixed += 1;
-    }
-    // 秒数小于10前面添加0， 如01，避免谷歌表格识别不成分钟数。  5:9 -> 5:09
-    const pace_second_text = pace_second < 10 ? '0' + pace_second : String(pace_second);
-    // console.log('pace', pace);
-    // console.log('pace_min', pace_min);
-    // console.log('pace_second', pace_second);
+    const { pace, paceText } = formatPace(averageSpeed);
 
     return {
         activityId, // 活动id
@@ -114,7 +103,7 @@ export const getGarminStatistics = async (client: GarminClientType): Promise<Rec
         // averageSpeed 是 m/s
         averageSpeed, // 速度
         averagePace: pace,  // min/km
-        averagePaceText: `${pace_min_fixed}:${pace_second_text}`,  // min/km
+        averagePaceText: paceText,  // min/km
         averageHR, // 平均心率
         maxHR, // 最大心率
         averageRunningCadenceInStepsPerMinute, // 平均每分钟步频

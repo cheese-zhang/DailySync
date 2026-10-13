@@ -60,7 +60,7 @@ export const getLatestSheetsData = async (): Promise<string[]> => {
             spreadsheetId: GOOGLE_SHEET_ID,
             range: '工作表1!A1:AD',
         });
-        const sheetsData = _.last(response2.data.values);
+        const sheetsData = _.last(response2.data.values) ?? [];
         return sheetsData;
         // console.log(response2.data);
         // console.log(sheetsData);

@@ -15,7 +15,6 @@ import _ from 'lodash';
 import { formatPace } from './activity';
 const decompress = require('decompress');
 
-const unzipper = require('unzipper');
 
 /**
  * 上传 .fit file

@@ -3,13 +3,8 @@ name: Sync Garmin CN to Garmin Global
 on:
  workflow_dispatch:
  schedule:
-   - cron: "0 15 * * *"
    - cron: "0 11 * * *"
-   - cron: "0 6 * * *"
    - cron: "0 1 * * *"
- push:
-   branches:
-     - main
 
 env:
   # please change to your own config.
@@ -25,6 +20,10 @@ env:
   GARMIN_GLOBAL_USERNAME: ${{ secrets.GARMIN_GLOBAL_USERNAME }}
   GARMIN_GLOBAL_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
 
+concurrency:
+  group: garmin-sync
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -36,8 +35,11 @@ jobs:
           node-version: '22'
           cache: 'yarn'
       - run: yarn
+      - uses: actions/cache@v4
+        with:
+          path: tokens
+          key: garmin-tokens-${{ github.run_id }}
+          restore-keys: |
+            garmin-tokens-
       - run: yarn sync_cn
         timeout-minutes: 5
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: Save Garmin Session

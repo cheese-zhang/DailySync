@@ -11,6 +11,10 @@ env:
   GARMIN_MIGRATE_NUM: ${{ secrets.GARMIN_MIGRATE_NUM }}
   GARMIN_MIGRATE_START: ${{ secrets.GARMIN_MIGRATE_START }}
 
+concurrency:
+  group: garmin-sync
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -22,7 +26,10 @@ jobs:
           node-version: '22'
           cache: 'yarn'
       - run: yarn
-      - run: yarn migrate_garmin_cn_to_global
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: actions/cache@v4
         with:
-          commit_message: Save Garmin Session
+          path: tokens
+          key: garmin-tokens-${{ github.run_id }}
+          restore-keys: |
+            garmin-tokens-
+      - run: yarn migrate_garmin_cn_to_global

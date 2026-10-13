@@ -1,56 +1,7 @@
-import fs from 'fs';
-
-const core = require('@actions/core');
-import {
-    DOWNLOAD_DIR,
-    FILE_SUFFIX,
-    GARMIN_MIGRATE_NUM_DEFAULT,
-    GARMIN_MIGRATE_START_DEFAULT,
-    GARMIN_PASSWORD_DEFAULT,
-    GARMIN_URL_DEFAULT,
-    GARMIN_USERNAME_DEFAULT,
-} from '../constant';
-import { GarminClientType } from './type';
 import _ from 'lodash';
-import { formatPace } from './activity';
-const decompress = require('decompress');
-
-
-/**
- * 上传 .fit file
- * @param fitFilePath
- * @param client
- */
-export const uploadGarminActivity = async (fitFilePath: string, client: GarminClientType): Promise<void> => {
-    if (!fs.existsSync(DOWNLOAD_DIR)) {
-        fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
-    }
-    const upload = await client.uploadActivity(fitFilePath);
-    console.log('upload to garmin activity', upload);
-};
-
-/**
- * 下载 garmin 活动原始数据，并解压保存到本地
- * @param activityId
- * @param client GarminClientType
- */
-export const downloadGarminActivity = async (activityId, client: GarminClientType): Promise<string> => {
-    if (!fs.existsSync(DOWNLOAD_DIR)) {
-        fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
-    }
-    const activity = await client.getActivity({ activityId: activityId });
-    await client.downloadOriginalActivityData(activity, DOWNLOAD_DIR);
-    const originZipFile = DOWNLOAD_DIR + '/' + activityId + '.zip';
-    const baseFilePath = `${DOWNLOAD_DIR}/`;
-    const unzipped = await decompress(originZipFile, DOWNLOAD_DIR);
-    const unzippedFileName = unzipped?.[0]?.path;
-    if (!unzippedFileName) {
-        throw new Error(`活动 ${activityId} 解压后没有文件`);
-    }
-    const path = baseFilePath + unzippedFileName;
-    console.log('downloadGarminActivity - path:', path)
-    return path;
-};
+import { GARMIN_URL_DEFAULT } from '../constant';
+import { formatPace } from '../utils/activity';
+import { GarminClientType } from './client';
 
 export const getGarminStatistics = async (client: GarminClientType): Promise<Record<string, any>> => {
     // Get a list of default length with most recent activities

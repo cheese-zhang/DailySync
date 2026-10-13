@@ -7,8 +7,8 @@ import {
     RQ_USERID_DEFAULT,
 } from '../constant';
 import axios from 'axios';
-import { getGaminCNClient } from './garmin_cn';
-import { getGarminStatistics } from './garmin_common';
+import { getGarminClient } from '../garmin/client';
+import { getGarminStatistics } from '../garmin/statistics';
 import { getLatestActivityIdInSheets, insertDataToSheets } from './google_sheets';
 import _ from 'lodash';
 const core = require('@actions/core');
@@ -20,7 +20,7 @@ const BARK_KEY = process.env.BARK_KEY ?? BARK_KEY_DEFAULT;
 
 export const doRQGoogleSheets = async () => {
     const rqResult = await getRQOverView();
-    const clientCN = await getGaminCNClient();
+    const clientCN = await getGarminClient('CN');
     const garminStatistics = await getGarminStatistics(clientCN);
     const activityId = garminStatistics.activityId;
     const data = _.assign(rqResult, garminStatistics);

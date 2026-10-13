@@ -22,7 +22,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Sync Garmin Global to Garmin CN
     steps:
       - uses: actions/checkout@v4

@@ -233,7 +233,3 @@ tail -100f /var/log/dailysync.log
 
 账号及密码保存在自己的 `github secrets` 中，不会泄露，运行代码均 **开放源码**，欢迎提交`PR`。
 
-#### 进群讨论
-
-为方便讨论，请加我绿色软件：nononopass （下面扫码）我拉你进群。`nononopass`  我拉你进群。
-![二维码扫码](./assets/wechat_qr.png)

@@ -23,7 +23,7 @@ const unzipper = require('unzipper');
  */
 export const uploadGarminActivity = async (fitFilePath: string, client: GarminClientType): Promise<void> => {
     if (!fs.existsSync(DOWNLOAD_DIR)) {
-        fs.mkdirSync(DOWNLOAD_DIR);
+        fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
     }
     const upload = await client.uploadActivity(fitFilePath);
     console.log('upload to garmin activity', upload);
@@ -36,14 +36,17 @@ export const uploadGarminActivity = async (fitFilePath: string, client: GarminCl
  */
 export const downloadGarminActivity = async (activityId, client: GarminClientType): Promise<string> => {
     if (!fs.existsSync(DOWNLOAD_DIR)) {
-        fs.mkdirSync(DOWNLOAD_DIR);
+        fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
     }
     const activity = await client.getActivity({ activityId: activityId });
     await client.downloadOriginalActivityData(activity, DOWNLOAD_DIR);
     const originZipFile = DOWNLOAD_DIR + '/' + activityId + '.zip';
     const baseFilePath = `${DOWNLOAD_DIR}/`;
     const unzipped = await decompress(originZipFile, DOWNLOAD_DIR);
-    const unzippedFileName = unzipped?.[0].path;
+    const unzippedFileName = unzipped?.[0]?.path;
+    if (!unzippedFileName) {
+        throw new Error(`活动 ${activityId} 解压后没有文件`);
+    }
     const path = baseFilePath + unzippedFileName;
     console.log('downloadGarminActivity - path:', path)
     return path;
@@ -61,6 +64,9 @@ export const getGarminStatistics = async (client: GarminClientType): Promise<Rec
 
     // 包含running关键字的都算
     const recentRunningAct = _.filter(acts, act => act?.activityType?.typeKey?.includes('running'))[0];
+    if (!recentRunningAct) {
+        throw new Error('最近的活动中没有跑步记录');
+    }
     console.log('recentRunningAct type: ', recentRunningAct.activityType?.typeKey);
 
     const {
@@ -87,9 +93,14 @@ export const getGarminStatistics = async (client: GarminClientType): Promise<Rec
 
     const pace = 1 / (averageSpeed / 1000 * 60);
     const pace_min = Math.floor(1 / (averageSpeed / 1000 * 60));
-    const pace_second = (pace - pace_min) * 60;
+    let pace_second = Math.round((pace - pace_min) * 60);
+    let pace_min_fixed = pace_min;
+    if (pace_second >= 60) {
+        pace_second -= 60;
+        pace_min_fixed += 1;
+    }
     // 秒数小于10前面添加0， 如01，避免谷歌表格识别不成分钟数。  5:9 -> 5:09
-    const pace_second_text = pace_second < 10 ? '0' + pace_second.toFixed(0) : pace_second.toFixed(0);
+    const pace_second_text = pace_second < 10 ? '0' + pace_second : String(pace_second);
     // console.log('pace', pace);
     // console.log('pace_min', pace_min);
     // console.log('pace_second', pace_second);
@@ -103,7 +114,7 @@ export const getGarminStatistics = async (client: GarminClientType): Promise<Rec
         // averageSpeed 是 m/s
         averageSpeed, // 速度
         averagePace: pace,  // min/km
-        averagePaceText: `${pace_min}:${pace_second_text}`,  // min/km
+        averagePaceText: `${pace_min_fixed}:${pace_second_text}`,  // min/km
         averageHR, // 平均心率
         maxHR, // 最大心率
         averageRunningCadenceInStepsPerMinute, // 平均每分钟步频

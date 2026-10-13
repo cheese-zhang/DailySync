@@ -11,6 +11,7 @@ import { number2capital } from './number_tricks';
 const core = require('@actions/core');
 import _ from 'lodash';
 import { getSessionFromDB, initDB, saveSessionToDB, updateSessionToDB } from './sqlite';
+import fs from "fs";
 
 const { GarminConnect } = require('garmin-connect');
 
@@ -30,7 +31,13 @@ export const getGaminGlobalClient = async (): Promise<GarminClientType> => {
     const GCClient = new GarminConnect({username: GARMIN_GLOBAL_USERNAME, password: GARMIN_GLOBAL_PASSWORD});
 
     try {
-        await GCClient.login();
+        if (!fs.existsSync('tokens/global')) {
+            await GCClient.login();
+            GCClient.exportTokenToFile('tokens/global')
+        }else {
+            console.log('Reuse global token');
+            GCClient.loadTokenByFile('tokens/global')
+        }
         const userInfo = await GCClient.getUserProfile();
         const { userName, location } = userInfo;
         if (!userName) {
@@ -41,13 +48,14 @@ export const getGaminGlobalClient = async (): Promise<GarminClientType> => {
     } catch (err) {
         console.error(err);
         core.setFailed(err);
+        throw err;
     }
 };
 
 export const migrateGarminGlobal2GarminCN = async (count = 200) => {
-    const actIndex = Number(GARMIN_MIGRATE_START) ?? 0;
+    const actIndex = Number(GARMIN_MIGRATE_START) || 0;
     // const actPerGroup = 10;
-    const totalAct = Number(GARMIN_MIGRATE_NUM) ?? count;
+    const totalAct = Number(GARMIN_MIGRATE_NUM) || count;
 
     const clientCn = await getGaminCNClient();
     const clientGlobal = await getGaminGlobalClient();

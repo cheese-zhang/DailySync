@@ -35,7 +35,13 @@ export const getGaminCNClient = async (): Promise<GarminClientType> => {
     const GCClient = new GarminConnect({username: GARMIN_USERNAME,password: GARMIN_PASSWORD},'garmin.cn');
 
     try {
-        await GCClient.login();
+        if (!fs.existsSync('tokens/cn')) {
+            await GCClient.login();
+            GCClient.exportTokenToFile('tokens/cn')
+        }else {
+            console.log('Reuse cn token');
+            GCClient.loadTokenByFile('tokens/cn')
+        }
         const userInfo = await GCClient.getUserProfile();
         const { userName, location } = userInfo;
         if (!userName) {
@@ -47,13 +53,14 @@ export const getGaminCNClient = async (): Promise<GarminClientType> => {
     } catch (err) {
         console.error(err);
         core.setFailed(err);
+        throw err;
     }
 };
 
 export const migrateGarminCN2GarminGlobal = async (count = 200) => {
-    const actIndex = Number(GARMIN_MIGRATE_START) ?? 0;
+    const actIndex = Number(GARMIN_MIGRATE_START) || 0;
     // const actPerGroup = 10;
-    const totalAct = Number(GARMIN_MIGRATE_NUM) ?? count;
+    const totalAct = Number(GARMIN_MIGRATE_NUM) || count;
 
     const clientCN = await getGaminCNClient();
     const clientGlobal = await getGaminGlobalClient();
@@ -85,7 +92,7 @@ export const syncGarminCN2GarminGlobal = async () => {
     const latestGlobalActStartTime = globalActs[0]?.startTimeLocal ?? '0';
     const latestCnActStartTime = cnActs[0]?.startTimeLocal ?? '0';
     if (latestCnActStartTime === latestGlobalActStartTime) {
-        console.log(`没有要同步的活动内容, 最近的活动:  【 ${cnActs[0].activityName} 】, 开始于: 【 ${latestCnActStartTime} 】`);
+        console.log(`没有要同步的活动内容, 最近的活动:  【 ${cnActs[0]?.activityName} 】, 开始于: 【 ${latestCnActStartTime} 】`);
     } else {
         // fix: #18
         _.reverse(cnActs);

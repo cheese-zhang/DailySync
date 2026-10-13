@@ -5,7 +5,7 @@ export const FILE_SUFFIX = {
 };
 export const DOWNLOAD_DIR = './garmin_fit_files';
 export const DB_FILE_PATH = './db/garmin.db';
-export const AESKEY_DEFAULT = 'LSKDAJALSD';
+export const AESKEY_DEFAULT = '';
 /**
  * GARMIN ACCOUNT
  */
@@ -16,8 +16,8 @@ export const GARMIN_PASSWORD_DEFAULT = '';
 export const GARMIN_GLOBAL_USERNAME_DEFAULT = '';
 export const GARMIN_GLOBAL_PASSWORD_DEFAULT = '';
 // 佳明迁移数量配置
-export const GARMIN_MIGRATE_NUM_DEFAULT = '';
-export const GARMIN_MIGRATE_START_DEFAULT = '';
+export const GARMIN_MIGRATE_NUM_DEFAULT = '100';
+export const GARMIN_MIGRATE_START_DEFAULT = '0';
 // 佳明每次同步时检查的最多的数量
 export const GARMIN_SYNC_NUM_DEFAULT = 10;
 

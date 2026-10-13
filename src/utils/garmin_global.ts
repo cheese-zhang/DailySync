@@ -10,7 +10,6 @@ import { downloadGarminActivity, uploadGarminActivity } from './garmin_common';
 import { number2capital } from './number_tricks';
 const core = require('@actions/core');
 import _ from 'lodash';
-import { getSessionFromDB, initDB, saveSessionToDB, updateSessionToDB } from './sqlite';
 import fs from "fs";
 
 const { GarminConnect } = require('garmin-connect');

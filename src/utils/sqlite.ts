@@ -1,6 +1,8 @@
 import { AESKEY_DEFAULT, DB_FILE_PATH, DOWNLOAD_DIR, GARMIN_USERNAME_DEFAULT } from '../constant';
 import sqlite3 from 'sqlite3';
 import { Database, open } from 'sqlite';
+import fs from 'fs';
+import path from 'path';
 
 const CryptoJS = require('crypto-js');
 
@@ -17,11 +19,17 @@ export const initDB = async () => {
         )`);
 };
 
-export const getDB = async () => {
-    return await open({
-        filename: DB_FILE_PATH,
-        driver: sqlite3.Database,
-    });
+let dbPromise: Promise<Database> | undefined;
+
+export const getDB = (): Promise<Database> => {
+    if (!dbPromise) {
+        fs.mkdirSync(path.dirname(DB_FILE_PATH), { recursive: true });
+        dbPromise = open({
+            filename: DB_FILE_PATH,
+            driver: sqlite3.Database,
+        });
+    }
+    return dbPromise;
 };
 
 export const saveSessionToDB = async (type: 'CN' | 'GLOBAL', session: Record<string, any>) => {
@@ -59,10 +67,16 @@ export const getSessionFromDB = async (type: 'CN' | 'GLOBAL'): Promise<Record<st
 };
 
 export const encryptSession = (session: Record<string, any>): string => {
+    if (!AESKEY) {
+        throw new Error('请设置环境变量 AESKEY 用于加密会话');
+    }
     const sessionStr = JSON.stringify(session);
     return CryptoJS.AES.encrypt(sessionStr, AESKEY).toString();
 };
 export const decryptSession = (sessionStr: string): Record<string, any> => {
+    if (!AESKEY) {
+        throw new Error('请设置环境变量 AESKEY 用于解密会话');
+    }
     const bytes = CryptoJS.AES.decrypt(sessionStr, AESKEY);
     const session = bytes.toString(CryptoJS.enc.Utf8);
     return JSON.parse(session);

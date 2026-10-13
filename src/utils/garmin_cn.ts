@@ -1,6 +1,5 @@
 import { getGaminGlobalClient } from './garmin_global';
 import {
-    AESKEY_DEFAULT,
     GARMIN_MIGRATE_NUM_DEFAULT,
     GARMIN_MIGRATE_START_DEFAULT,
     GARMIN_PASSWORD_DEFAULT,
@@ -12,9 +11,7 @@ import { GarminClientType } from './type';
 import { number2capital } from './number_tricks';
 const core = require('@actions/core');
 import _ from 'lodash';
-import { getSessionFromDB, initDB, saveSessionToDB, updateSessionToDB } from './sqlite';
 
-const CryptoJS = require('crypto-js');
 const fs = require('fs');
 
 const { GarminConnect } = require('garmin-connect');
